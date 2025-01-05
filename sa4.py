@@ -153,21 +153,17 @@ class SystolicArray3x2:
         self._trace(0, A, B)
 
         # A の各行について計算
-        for a_row_i in range(A.shape[0]):  # Aの行を順次処理
+        for a_row_i in range(A.shape[0] + 1):
             print(f"\n=== A の行 {a_row_i} の計算開始 ===")
 
             # 全PEをリセット
             self.reset()
 
             # **右方向シフト**
-            print("\n=== シフト前のトレース ===")
-            self._traceA(99, A)
             self.right_shift()
-            print("\n=== シフト後のトレース ===")
-            self._traceA(100, A)
-
             # 次の A の行を左端に代入
-            a_row = A[a_row_i]
+            if a_row_i < 2:
+                a_row = A[a_row_i]
             for r in range(self.rows):
                 self.pes[r][0].a_reg = a_row[r]  # 左端に新しい値を設定
 
@@ -192,11 +188,16 @@ class SystolicArray3x2:
 
             # **結果収集（行ごとに処理）**
             for c in range(self.cols):
-                out[a_row_i, c] = self.pes[self.rows - 1][c].flush()
-                print()
+                if c == 0:  # 1列目はそのまま代入
+                    if a_row_i < 2:
+                        out[a_row_i, c] = self.pes[self.rows - 1][c].flush()
+                        print(f"a_rou={a_row_i}, c={c}, flush={out[a_row_i, c]}")
+                elif c == 1 and a_row_i > 0:  # 2列目は前の行に代入
+                    out[a_row_i - 1, c] = self.pes[self.rows - 1][c].flush()
+                    print(f"a_rou={a_row_i - 1}, c={c}, flush={out[a_row_i - 1, c]}")
+
 
             print(f"\n=== A の行 {a_row_i} の計算終了 ===")
-            self._trace(f"{a_row_i}-final", A, B)
 
         return out
 
