@@ -20,7 +20,7 @@ class PE:
         計算ステップ：
         A_reg × b_val の積を partial_sum に加算（累積）。
         """
-        self.partial_sum += self.a_reg * self.b_val
+        self.partial_sum = self.a_reg * self.b_val
 
     def shift_step(self):
         """
@@ -78,6 +78,14 @@ class SystolicArray3x2:
             for c in range(self.cols):
                 if r > 0:
                     self.pes[r][c].top = self.pes[r - 1][c]
+
+    def execute_calc_step(self):
+        """
+        Systolic Array 内のすべての PE で calc_step を実行。
+        """
+        for r in range(self.rows):
+            for c in range(self.cols):
+                self.pes[r][c].calc_step()
 
     def reset(self):
         """
@@ -158,9 +166,7 @@ class SystolicArray3x2:
             self._trace(f"{a_row_i}-1-代入とシフト", A, B)
 
             # 各 PE で calc_step を実行
-            for r in range(self.rows):
-                for c in range(self.cols):
-                    self.pes[r][c].calc_step()
+            self.execute_calc_step()
 
             # トレース：calc_step 実行結果を確認
             self._trace(f"{a_row_i}-2-計算", A, B)
