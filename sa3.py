@@ -1,122 +1,147 @@
 import numpy as np
 
-class SystolicCell:
-    """
-    2x2 シストリックセル。
-    上下左右のセルへの参照を持ちつつ、内部で a_reg, b_reg, partial_sum を保持。
-    """
-    def __init__(self, row, col):
+class PE:
+    def __init__(self, row, col, b_val=0):
         self.row = row
         self.col = col
+        self.b_val = b_val
+        self.a_reg = 0
+        self.partial_sum = 0
 
         # 上下左右のセル参照 (初期は None)
-        self.top = None
-        self.bottom = None
-        self.left = None
-        self.right = None
+        self.top = 0
+    def calc_step(self):
+        self.partial_sum = self.a_reg * self.b_val
 
-        # レジスタや内部状態
-        self.a_reg = 0.0
-        self.b_reg = 0.0
-        self.partial_sum = 0.0
-
-    def step(self, a_in, b_in):
-        """
-        1ステップごとに:
-          1) 前ステップで保持していた (a_reg, b_reg) の積を partial_sum に加算
-          2) 新たに受け取った a_in, b_in をレジスタに保存
-        """
-        self.partial_sum += self.a_reg * self.b_reg
-        self.a_reg = a_in
-        self.b_reg = b_in
+    def shift_step(self):
+        if self.top:  # 上のセルが存在する場合
+            self.partial_sum += self.top.partial_sum  # 上セルの partial_sum を加算
 
     def flush(self):
-        """
-        最後にレジスタ内に残っている (a_reg * b_reg) を partial_sum に加算して返す
-        """
-        self.partial_sum += self.a_reg * self.b_reg
         return self.partial_sum
 
+class SystolicArray:
 
-class SystolicArray2x2:
-    """
-    2x2 のシストリックアレイ。
-      - cells[r][c] (r,c in {0,1}) の4セル
-      - セル同士を上下左右で接続
-      - multiply(A, B) で行列 A(2x2) × B(2x2) を計算
-    """
-    def __init__(self):
-        # 2×2 のセルを生成
-        self.cells = []
-        for r in range(2):
-            row_cells = []
-            for c in range(2):
-                row_cells.append(SystolicCell(r, c))
-            self.cells.append(row_cells)
+    def __init__(self, B):
+        self.rows = 3
+        self.cols = 1
 
-        # 上下左右をリンク
-        for r in range(2):
-            for c in range(2):
-                cell = self.cells[r][c]
-                if r > 0:
-                    cell.top = self.cells[r-1][c]
-                if r < 1:
-                    cell.bottom = self.cells[r+1][c]
-                if c > 0:
-                    cell.left = self.cells[r][c-1]
-                if c < 1:
-                    cell.right = self.cells[r][c+1]
+        # PE配列を初期化
+        self.pes = []
+        for r in range(self.rows):
+            row_pes = []
+            for c in range(self.cols):
+                pe = PE(r, c, b_val=B[r][c])
+                row_pes.append(pe)
+            self.pes.append(row_pes)
+
+        # 上下左右リンク
+        self._link_pes()
+
+    def _link_pes(self):
+        for r in range(self.rows):
+            if r > 0:
+                self.pes[r][0].top = self.pes[r-1][0]  # 隣接する PE オブジェクトを参照
+
+
+    def _trace(self, step, A, B):
+        print(f"\nStep={step})")
+
+        # A_regを収集（Aは1行3列）
+        A_reg_mat = []
+        for r in range(len(A)):
+            a_row = [A[r][c] for c in range(len(A[0]))]
+            A_reg_mat.append(a_row)
+
+        # B_valを3行1列で表示
+        B_val_mat = np.array(B)  # Bは3行1列のまま表示
+
+        # partial_sumを3行1列で収集
+        PS_mat = [[self.pes[r][0].partial_sum] for r in range(self.rows)]  # 各PEのpartial_sumを収集
+
+        # 表示
+        print(" A_reg =\n", np.array(A_reg_mat))  # 1行3列
+        print(" b_val =\n", B_val_mat)  # 3行1列
+        print(" partial_sum =\n", np.array(PS_mat))  # 3行1列
 
     def multiply(self, A, B):
-        """
-        A, B: いずれも 2x2 の行列
-        シンプルに「k = t - (r + c)」方式で 4ステップ回して行列積を計算
-        """
-        A = np.array(A)
-        B = np.array(B)
+        A = np.array(A)   # shape=(1,3)
 
-        # 2×2 の場合、ステップは 2*2 = 4
-        total_steps = 2 * 2
+        out = np.zeros((3,1), dtype=int)
 
-        for t in range(total_steps):
-            for r in range(2):
-                for c in range(2):
-                    # 対角方向のシフトを表す式 k = t - (r + c)
-                    k = t - (r + c)
-                    if 0 <= k < 2:
-                        a_in = A[r, k]
-                        b_in = B[k, c]
-                    else:
-                        a_in = 0
-                        b_in = 0
+        # Aの代入
+        self.pes[0][0].a_reg = A[0][0]
+        self.pes[1][0].a_reg = A[0][1]
+        self.pes[2][0].a_reg = A[0][2]
+        self._trace(1, A, B)
 
-                    self.cells[r][c].step(a_in, b_in)
+        print("=======================================")
+        print("Calc")
 
-        # 計算終了後、flush() で各セルの partial_sum を集める
-        C = np.zeros((2,2), dtype=np.float64)
-        for r in range(2):
-            for c in range(2):
-                C[r, c] = self.cells[r][c].flush()
+        # 3セル計算
+        for rr in range(self.rows):
+            self.pes[rr][0].calc_step()
+            self._trace(2, A, B)
 
-        return C
+        print("=======================================")
+        print("SHIFT")
+
+        # 3回SHIFT
+        for rr in range(self.rows):
+            self._link_pes()
+            self.pes[rr][0].shift_step()
+            self._trace(3, A, B)
+
+        print("=======================================")
+
+        # flush => (3×2)
+        out = self.pes[2][0].flush()
+
+        return out
 
 
 def main():
-    A = [[1, 2],
-         [3, 4]]
-    B = [[5, 6],
-         [7, 8]]
+    # A
+    A = [
+        [1,2,3]
+    ]
+    # B
+    B = [
+        [11],
+        [13],
+        [15]
+    ]
 
-    sa = SystolicArray2x2()
-    C = sa.multiply(A, B)
+    # Aの行数と列数を取得
+    rows = len(A)  # 行数
+    cols = len(A[0]) if rows > 0 else 0  # 列数（最初の行の要素数）
 
-    print("A =\n", np.array(A))
-    print("B =\n", np.array(B))
-    print("C (Systolic) =\n", C)
-    print("C (NumPy)    =\n", np.dot(A, B))
+    print(f"A の形状: {rows} 行 x {cols} 列")
+    print(f"A の内容: {A}")
 
-    assert np.allclose(C, np.dot(A, B)), "Systolic array result doesn't match NumPy result!"
-    print("\033[94m結果が一致しました。\033[0m")
+    # Bの行数と列数を取得
+    rows = len(B)  # 行数
+    cols = len(B[0]) if rows > 0 else 0  # 列数（最初の行の要素数）
 
-if __name__ == "__main__":
+    print(f"B の形状: {rows} 行 x {cols} 列")
+    print(f"B の内容: {B}")
+
+    # 行列積の計算
+    A_np = np.array(A)
+    B_np = np.array(B)
+    expected_out = np.dot(A_np, B_np)  # NumPyでの行列積
+    print(f"NumPy での行列積の結果: {expected_out.flatten()[0]}")
+
+    # Systolic Arrayの計算
+    sa = SystolicArray(B)
+    out = sa.multiply(A, B)
+    print("Systolic Array の結果:", out)
+
+    # アサート
+    assert out == expected_out.flatten()[0], f"期待値 {expected_out.flatten()[0]} と結果 {out} が一致しません"
+    print("結果は正しいです！")
+
+    print("out=", out)
+
+if __name__=="__main__":
     main()
