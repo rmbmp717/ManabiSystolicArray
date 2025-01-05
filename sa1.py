@@ -34,43 +34,50 @@ class SystolicCell:
         self.partial_sum += self.a_reg * self.b_reg
         return self.partial_sum
 
+
 class SystolicArray:
+    """
+    行列同士の乗算を行うためのシストリックアレイをシミュレートするクラス。
+    """
     def __init__(self, size):
         self.size = size
+        # size x size のセルを作成
         self.cells = [[SystolicCell(r, c) for c in range(size)] for r in range(size)]
 
     def multiply(self, A, B):
+        """
+        行列 A, B (いずれも size x size) の積 C = A x B をシミュレートする。
+        """
+        # A, B を numpy array に変換
         A = np.array(A)
         B = np.array(B)
 
+        # 乗算結果 C を 0 初期化
         C = np.zeros((self.size, self.size), dtype=np.float64)
-        total_steps = 2 * self.size
+
+        # ステップ数は (2 * size - 1) 回分考える
+        # シフトして入力が全セルに行き渡るまで + フラッシュ時間 というイメージ
+        total_steps = 2 * self.size 
 
         for t in range(total_steps):
-            print("=" * 30)
-            print(f"step = {t}")
-            print("A =")
-            print(A)
-            print("B =")
-            print(B)
-
+            # 各行・列のセルに入力を与える
             for r in range(self.size):
                 for c in range(self.size):
-                    # A を右に、B を下にシフト
-                    if 0 <= t - r < self.size:
-                        a_in = A[r, t - r]  # A は同じ行で列をシフト
+                    # このセルに入る A, B を計算する
+                    # A は上に移動する、B は左に移動するようなイメージ
+                    # t - r - c が 0 以上の場合に、実際にその要素が届いているとみなす
+                    # (右下方向に演算結果が流れるイメージ)
+                    if 0 <= t - r - c < self.size:
+                        a_in = A[r, t - r - c]
+                        b_in = B[t - r - c, c]
                     else:
                         a_in = 0
-
-                    if 0 <= t - c < self.size:
-                        b_in = B[t - c, c]  # B は同じ列で行をシフト
-                    else:
                         b_in = 0
 
-                    print(f"r={r}, c={c}, a_in={a_in}, b_in={b_in}")
+                    # 1ステップ分演算
                     self.cells[r][c].step(a_in, b_in)
 
-        # フラッシュ処理
+        # 全セルのフラッシュを行い、最終結果を C に書き込む
         for r in range(self.size):
             for c in range(self.size):
                 C[r, c] = self.cells[r][c].flush()
@@ -78,15 +85,18 @@ class SystolicArray:
         return C
 
 
-
 def main():
+    # サンプル行列（2x2）
     A = [[1, 2],
          [3, 4]]
     B = [[5, 6],
          [7, 8]]
 
+    # シストリックアレイのインスタンスを作る
     size = 2
     systolic_array = SystolicArray(size)
+
+    # 演算
     result = systolic_array.multiply(A, B)
 
     print("A =")
@@ -96,6 +106,7 @@ def main():
     print("C = A x B (シストリックアレイによるシミュレーション結果)")
     print(result)
 
+    # NumPy の行列積による確認
     check = np.dot(A, B)
     print("NumPy による行列積:")
     print(check)
