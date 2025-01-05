@@ -31,7 +31,7 @@ class SystolicArray:
     def __init__(self, size):
         self.size = size
         # size×size のセル配列 (2×2)
-        self.cells = [[SystolicCell() for _ in range(size)] for _ in range(size)]
+        self.SA_cells = [[SystolicCell() for _ in range(size)] for _ in range(size)]
 
     def multiply(self, A, B):
         A = np.array(A)
@@ -44,11 +44,16 @@ class SystolicArray:
 
         # 各ステップでセル (r,c) に A, B の該当要素を入力
         for t in range(total_steps):
+            print("===================================")
+            print("t=", t)
             for r in range(self.size):
                 for c in range(self.size):
                     # 波がセル (r,c) に届くかどうか判定
                     # t - (r + c) が 0 <= < size のときだけ実データを入力
                     k = t - (r + c)
+                    print("===================")
+                    print("r=",r, ", c=", c)
+                    print("k=",k)
                     if 0 <= k < self.size:
                         a_in = A[r, k]
                         b_in = B[k, c]
@@ -56,12 +61,13 @@ class SystolicArray:
                         a_in = 0
                         b_in = 0
 
-                    self.cells[r][c].step(a_in, b_in)
+                    self.SA_cells[r][c].step(a_in, b_in)
 
         # 全セルを flush して、最終結果を C に書き込む
+        print("================END==================")
         for r in range(self.size):
             for c in range(self.size):
-                C[r, c] = self.cells[r][c].flush()
+                C[r, c] = self.SA_cells[r][c].flush()
 
         return C
 
@@ -84,7 +90,13 @@ def main():
     print("C = A x B (シストリックアレイで計算)")
     print(C)
 
-    print("NumPy =", np.dot(A, B))
+    np_result = np.dot(A, B)
+    print("NumPy =")
+    print(np_result)
+    
+    # NumPy の結果とシストリックアレイの結果が近いかどうかアサートで確認
+    assert np.allclose(C, np_result), "Systolic array result doesn't match NumPy result!"
+    print("結果が一致しました。")
 
 
 if __name__ == "__main__":
