@@ -150,7 +150,7 @@ class SystolicArray3x2:
         # 結果を格納する行列を初期化
         out = np.zeros((A.shape[0], B.shape[1]), dtype=int)
 
-        print("\n=== 初期状態 ===")
+        #print("\n=== 初期状態 ===")
         #self._trace(0, A, B)
 
         # A の各行について計算
@@ -194,7 +194,7 @@ class SystolicArray3x2:
                 row_index = a_row_i - col
                 if 0 <= row_index < out.shape[0]:  # 配列範囲内のみ格納
                     out[row_index, col] = flush_out[col]
-                    print(f"out[{row_index}, {col}] = {flush_out[col]}")
+                    #print(f"out[{row_index}, {col}] = {flush_out[col]}")
 
             print(f"\n=== A の行 {a_row_i} の計算終了 ===")
 
@@ -224,9 +224,7 @@ def main():
     result = sa.multiply(A, B)
 
     # 結果を表示
-    print("A (2×3):")
     print(A_np)
-    print("B (3×2):")
     print(B_np)
 
     print("\n=== NumPy の行列積 ===")
