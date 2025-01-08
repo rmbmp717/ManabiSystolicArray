@@ -24,14 +24,14 @@ module PE (
     //========================================================
     // Internal Registers
     //========================================================
-    reg [15:0] b_reg_internal;         // B を保持するレジスタ
-    reg [15:0] a_reg;                  // A を保持するレジスタ
-    reg [15:0] ps_reg;                 // partial_sum を保持
+    reg [15:0] b_reg_internal;         // Register to hold B value
+    reg [15:0] a_reg;                  // Register to hold A value
+    reg [15:0] ps_reg;                 // Register to hold partial_sum
 
-    // 5段パイプライン用レジスタ (1つの乗算器を5サイクルかけて実行する想定)
-    reg [15:0] mul_pipe [0:4];         // mul_pipe[0] が最初に入力を受け取る
-    wire [15:0] mul_input;             // 乗算入力 (A * B)
-    reg [15:0] mul_result;             // 乗算結果（5段の最後）
+    // Registers for 5-stage pipeline (Assumes 1 multiplier takes 5 cycles to execute)
+    reg [15:0] mul_pipe [0:4];         // mul_pipe[0] receives the initial input
+    wire [15:0] mul_input;             // Multiplier input (A * B)
+    reg [15:0] mul_result;             // Multiplier output (final result from 5th stage)
 
     //========================================================
     // B Register Write
@@ -45,7 +45,7 @@ module PE (
     end
 
     //========================================================
-    // A Register & Shift (右方向シフト)
+    // A Register & Shift (Right Shift)
     //========================================================
     always @(posedge Clock or negedge rst_n) begin
         if (!rst_n) begin
@@ -53,18 +53,18 @@ module PE (
         end else if (data_clear) begin
             a_reg <= 16'd0;
         end else if (en_shift_right) begin
-            // 左から a_in が入ってきて自分のレジスタにロード
+            // Load a_in from the left into the current register
             a_reg <= a_in;
         end
     end
 
-    // 出力: 自分の a_reg を右隣へ渡す
+    // Output: Pass a_reg to the right neighbor
     assign a_shift_to_right = a_reg;
 
     //========================================================
     // 5-stage Multiply Pipeline
     //========================================================
-    assign mul_input = a_reg * b_reg_internal; // 実際は合成上マルチサイクル等の考慮が必要
+    assign mul_input = a_reg * b_reg_internal; // In practice, consider synthesis constraints such as multi-cycle
 
     integer i;
     always @(posedge Clock or negedge rst_n) begin
@@ -77,7 +77,7 @@ module PE (
                 mul_pipe[i] <= 16'd0;
             end
         end else begin
-            // シフトレジスタ形式
+            // Shift register structure
             mul_pipe[0] <= mul_input;       // Stage 1
             mul_pipe[1] <= mul_pipe[0];    // Stage 2
             mul_pipe[2] <= mul_pipe[1];    // Stage 3
@@ -86,7 +86,7 @@ module PE (
         end
     end
 
-    // 最終段の乗算結果
+    // Final stage of the multiplier result
     always @(posedge Clock or negedge rst_n) begin
         if (!rst_n) begin
             mul_result <= 16'd0;
@@ -98,7 +98,7 @@ module PE (
     end
 
     //========================================================
-    // partial_sum Register & Shift (下方向シフト)
+    // partial_sum Register & Shift (Downward Shift)
     //========================================================
     always @(posedge Clock or negedge rst_n) begin
         if (!rst_n) begin
@@ -106,13 +106,13 @@ module PE (
         end else if (data_clear) begin
             ps_reg <= 16'd0;
         end else if (en_shift_bottom) begin
-            // ここで上からの ps_in と 自分の mul_result を足し込む、とする場合
-            // ps_reg は現サイクルの古い値 + ps_in + mul_result など、要件に応じて決定
+            // Add ps_in from above and the current mul_result
+            // ps_reg = current ps_reg + ps_in + mul_result, depending on requirements
             ps_reg <= ps_in + mul_result;
         end
     end
 
-    // 出力: 自分の partial_sum を下へ渡す
+    // Output: Pass partial_sum to the lower neighbor
     assign partial_sum_to_bottom = ps_reg;
 
 endmodule
