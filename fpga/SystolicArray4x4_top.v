@@ -65,50 +65,36 @@ module SystolicArray4x4_top (
     //------------------------------------------------
     //  (3) 外部への読み出しデータ
     //------------------------------------------------
-    //     ここでは例として「b_reg_array[b_sel]」を返す
-    //     A側を返したい場合は、sel_a_or_b で切り替えるなど
-    //------------------------------------------------
+    // sel_a_or_b に基づいて読み出しソースを選択
     reg [15:0] rdata_mux;
-    always @(*) begin
-        // b_sel による読み出し例
-        case (b_sel)
-            4'd0 :  rdata_mux = b_reg_array[0];
-            4'd1 :  rdata_mux = b_reg_array[1];
-            4'd2 :  rdata_mux = b_reg_array[2];
-            4'd3 :  rdata_mux = b_reg_array[3];
-            4'd4 :  rdata_mux = b_reg_array[4];
-            4'd5 :  rdata_mux = b_reg_array[5];
-            4'd6 :  rdata_mux = b_reg_array[6];
-            4'd7 :  rdata_mux = b_reg_array[7];
-            4'd8 :  rdata_mux = b_reg_array[8];
-            4'd9 :  rdata_mux = b_reg_array[9];
-            4'd10:  rdata_mux = b_reg_array[10];
-            4'd11:  rdata_mux = b_reg_array[11];
-            4'd12:  rdata_mux = b_reg_array[12];
-            4'd13:  rdata_mux = b_reg_array[13];
-            4'd14:  rdata_mux = b_reg_array[14];
-            4'd15:  rdata_mux = b_reg_array[15];
-            default: rdata_mux = 16'hxxxx;
-        endcase
+    always @(posedge Clock or negedge rst_n) begin
+        if (!rst_n) begin
+            rdata_mux <= 16'd0;
+        end else begin
+            if (!sel_a_or_b) begin
+                rdata_mux <= b_reg_array[b_sel];
+            end else begin
+                rdata_mux <= a_left_in[a_sel];
+            end
+        end
     end
     assign external_rdata = rdata_mux;
 
     // =================================================================
     //  (4) サブモジュールに渡すために wire を経由して配列をアサイン
     // =================================================================
-    wire [15:0] w_b_reg_array_flat [0:15];
+    wire [15:0] w_b_reg_array_flat [0:3];
     wire [15:0] w_a_left_in_flat   [0:3];
 
     genvar idx_b, idx_a;
     generate
-        for (idx_b = 0; idx_b < 16; idx_b = idx_b + 1) begin : GEN_B_REG_ASSIGN
+        for (idx_b = 0; idx_b < 4; idx_b = idx_b + 1) begin : GEN_B_REG_ASSIGN
             assign w_b_reg_array_flat[idx_b] = b_reg_array[idx_b];
         end
         for (idx_a = 0; idx_a < 4; idx_a = idx_a + 1) begin : GEN_A_LEFT_ASSIGN
             assign w_a_left_in_flat[idx_a] = a_left_in[idx_a];
         end
     endgenerate
-
 
     // =================================================================
     //  (5) サブモジュール（SystolicArray4x4）をインスタンス化
@@ -120,10 +106,8 @@ module SystolicArray4x4_top (
         .en_shift_right      (en_shift_right),
         .en_shift_bottom     (en_shift_bottom),
 
-        .b_reg_array_flat    (w_b_reg_array_flat),
-        .b_we_array_flat     (b_we_array_flat),
-
         .a_left_in_flat      (w_a_left_in_flat),
+        .b_top_in_flat       (w_b_reg_array_flat),
         .ps_top_in_flat      (ps_top_in_flat),
 
         .ps_bottom_out_flat  (ps_bottom_out_flat)

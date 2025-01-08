@@ -1,3 +1,4 @@
+
 `timescale 1ns / 1ps
 
 module SystolicArray4x4 (
@@ -6,15 +7,13 @@ module SystolicArray4x4 (
 
     // Control signals (shared across all PEs)
     input  wire         data_clear,
+    input  wire         en_b_shift_bottom,
     input  wire         en_shift_right,
     input  wire         en_shift_bottom,
 
-    // B register input (1D array from external sources)
-    input  wire [15:0]   b_reg_array_flat [0:15], // Flattened 1D array (4x4 = 16 elements)
-    input  wire         b_we_array_flat  [0:15], // Flattened 1D array (4x4 = 16 elements)
-
     // External connections for A and partial_sum (1D arrays)
     input  wire [15:0]  a_left_in_flat   [0:3],  // Input A from the left (4 elements)
+    input  wire [15:0]  b_top_in_flat    [0:3], 
     input  wire [15:0]  ps_top_in_flat   [0:3],  // Input partial_sum from the top (4 elements)
     
     // Outputs for the final results (1D array)
@@ -24,9 +23,8 @@ module SystolicArray4x4 (
     //========================================================
     // Internal 2D arrays (B, WE, A, partial_sum)
     //========================================================
-    wire [15:0] b_reg_array [0:3][0:3];
-    wire        b_we_array  [0:3][0:3];
     wire [15:0] a_left_in   [0:3];
+    wire [15:0] b_top_in    [0:3];
     wire [15:0] ps_top_in   [0:3];
     wire [15:0] ps_bottom_out [0:3];
 
@@ -34,12 +32,14 @@ module SystolicArray4x4 (
     // Systolic internal wiring (A shifts right, partial_sum shifts down)
     //========================================================
     wire [15:0] a_wire [0:3][0:4];  // Horizontal wiring (4 rows x 5 columns)
+    wire [15:0] b_wire [0:4][0:3];  // Horizontal wiring (4 rows x 5 columns)
     wire [15:0] ps_wire [0:4][0:3]; // Vertical wiring (5 rows x 4 columns)
 
     //========================================================
     // Intermediate wiring: a_in and ps_in to pass to each PE (4x4 dimensions)
     //========================================================
     wire [15:0] a_in_val [0:3][0:3];
+    wire [15:0] b_in_val [0:3][0:3];
     wire [15:0] ps_in_val[0:3][0:3];
 
     //========================================================
@@ -47,20 +47,17 @@ module SystolicArray4x4 (
     //========================================================
     genvar i, j;
 
-    // Mapping B registers and WE signals
-    generate
-        for (i = 0; i < 4; i = i + 1) begin : MAP_B_REG
-            for (j = 0; j < 2; j = j + 1) begin : MAP_B_REG_COL
-                assign b_reg_array[i][j] = b_reg_array_flat[i * 4 + j];
-                assign b_we_array[i][j]  = b_we_array_flat[i * 4 + j];
-            end
-        end
-    endgenerate
-
     // Mapping A inputs from the left
     generate
         for (i = 0; i < 4; i = i + 1) begin : MAP_A_LEFT
             assign a_left_in[i] = a_left_in_flat[i];
+        end
+    endgenerate
+
+    // Mapping B inputs from the top
+    generate
+        for (i = 0; i < 4; i = i + 1) begin : MAP_B_TOP
+            assign b_top_in[i] = b_top_in_flat[i];
         end
     endgenerate
 
@@ -98,6 +95,21 @@ module SystolicArray4x4 (
     endgenerate
 
     generate
+        for (i = 0; i < 4; i = i + 1) begin : BIN_GEN
+            for (j = 0; j < 4; j = j + 1) begin : BIN_GEN_COL
+                // b_in_val[i][j]
+                if (i == 0) begin
+                    // First column → a_left_in[i]
+                    assign b_in_val[i][j] = b_top_in[j];
+                end else begin
+                    // Others → a_wire[i][j-1]
+                    assign b_in_val[i][j] = b_wire[i-1][j];
+                end
+            end
+        end
+    endgenerate
+
+    generate
         for (i = 0; i < 4; i = i + 1) begin : PSIN_GEN
             for (j = 0; j < 4; j = j + 1) begin : PSIN_GEN_COL
                 // ps_in_val[i][j]
@@ -122,25 +134,26 @@ module SystolicArray4x4 (
 
                 PE u_pe (
                     // Clock & Reset
-                    .Clock          (Clock),
-                    .rst_n          (rst_n),
+                    .Clock                  (Clock),
+                    .rst_n                  (rst_n),
 
                     // Control signals
-                    .data_clear     (data_clear),
-                    .en_shift_right (en_shift_right),
-                    .en_shift_bottom(en_shift_bottom),
+                    .data_clear             (data_clear),
+                    .en_shift_right         (en_shift_right),
+                    .en_b_shift_bottom      (en_b_shift_bottom),
+                    .en_shift_bottom        (en_shift_bottom),
 
                     // B inputs
-                    .b_reg          (b_reg_array[r][c]),
-                    .b_we           (b_we_array[r][c]),
+                    .b_in                   (b_in_val[r][c]),
 
                     // A / partial_sum inputs
-                    .a_in           (a_in_val[r][c]),   // No ternary operator!
-                    .ps_in          (ps_in_val[r][c]),  // No ternary operator!
+                    .a_in                   (a_in_val[r][c]),   // No ternary operator!
+                    .ps_in                  (ps_in_val[r][c]),  // No ternary operator!
 
                     // Outputs
-                    .a_shift_to_right      (a_wire[r][c]),
-                    .partial_sum_to_bottom (ps_wire[r][c])
+                    .a_shift_to_right       (a_wire[r][c]),
+                    .b_shift_to_bottom      (b_wire[r][c]),
+                    .partial_sum_to_bottom  (ps_wire[r][c])
                 );
 
             end
@@ -168,12 +181,12 @@ module PE (
 
     // Control signals
     input  wire         data_clear,
+    input  wire         en_b_shift_bottom,
     input  wire         en_shift_right,
     input  wire         en_shift_bottom,
     
     // B input
-    input  wire [15:0]  b_reg,
-    input  wire         b_we,
+    input  wire [15:0]  b_in,
 
     // A / partial sum from left / top
     input  wire [15:0]  a_in,
@@ -181,13 +194,14 @@ module PE (
 
     // Output
     output wire [15:0]  a_shift_to_right,
+    output wire [15:0]  b_shift_to_bottom,
     output wire [15:0]  partial_sum_to_bottom
 );
 
     //========================================================
     // Internal Registers
     //========================================================
-    reg [15:0] b_reg_internal;         // Register to hold B value
+    reg [15:0] b_reg;                  // Register to hold B value
     reg [15:0] a_reg;                  // Register to hold A value
     reg [15:0] ps_reg;                 // Register to hold partial_sum
 
@@ -201,11 +215,14 @@ module PE (
     //========================================================
     always @(posedge Clock or negedge rst_n) begin
         if (!rst_n) begin
-            b_reg_internal <= 16'd0;
-        end else if (b_we) begin
-            b_reg_internal <= b_reg;
-        end
+            b_reg <= 16'd0;
+        end else if (en_b_shift_bottom) begin
+            b_reg <= b_in;
+        end 
     end
+
+    // Output: Pass b_reg to the right neighbor
+    assign b_shift_to_bottom = b_reg;
 
     //========================================================
     // A Register & Shift (Right Shift)
@@ -227,7 +244,7 @@ module PE (
     //========================================================
     // 5-stage Multiply Pipeline
     //========================================================
-    assign mul_input = a_reg * b_reg_internal; // In practice, consider synthesis constraints such as multi-cycle
+    assign mul_input = a_reg * b_reg; // In practice, consider synthesis constraints such as multi-cycle
 
     integer i;
     always @(posedge Clock or negedge rst_n) begin
