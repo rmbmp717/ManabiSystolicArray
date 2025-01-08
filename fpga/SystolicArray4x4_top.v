@@ -4,6 +4,7 @@ module SystolicArray4x4_top (
     input  wire         Clock,
     input  wire         rst_n,
     input  wire         data_clear,
+    input  wire         en_b_shift_bottom,
     input  wire         en_shift_right,
     input  wire         en_shift_bottom,
 
@@ -103,6 +104,7 @@ module SystolicArray4x4_top (
         .Clock               (Clock),
         .rst_n               (rst_n),
         .data_clear          (data_clear),
+        .en_b_shift_bottom   (en_b_shift_bottom),
         .en_shift_right      (en_shift_right),
         .en_shift_bottom     (en_shift_bottom),
 
