@@ -5,12 +5,12 @@ module PE (
 
     // Control signals
     input  wire         data_clear,
+    input  wire         en_b_shift_bottom,
     input  wire         en_shift_right,
     input  wire         en_shift_bottom,
     
     // B input
-    input  wire [15:0]  b_reg,
-    input  wire         b_we,
+    input  wire [15:0]  b_in,
 
     // A / partial sum from left / top
     input  wire [15:0]  a_in,
@@ -18,13 +18,14 @@ module PE (
 
     // Output
     output wire [15:0]  a_shift_to_right,
+    output wire [15:0]  b_shift_to_bottom,
     output wire [15:0]  partial_sum_to_bottom
 );
 
     //========================================================
     // Internal Registers
     //========================================================
-    reg [15:0] b_reg_internal;         // Register to hold B value
+    reg [15:0] b_reg;                  // Register to hold B value
     reg [15:0] a_reg;                  // Register to hold A value
     reg [15:0] ps_reg;                 // Register to hold partial_sum
 
@@ -38,11 +39,14 @@ module PE (
     //========================================================
     always @(posedge Clock or negedge rst_n) begin
         if (!rst_n) begin
-            b_reg_internal <= 16'd0;
-        end else if (b_we) begin
-            b_reg_internal <= b_reg;
-        end
+            b_reg <= 16'd0;
+        end else if (en_b_shift_bottom) begin
+            b_reg <= b_in;
+        end 
     end
+
+    // Output: Pass b_reg to the right neighbor
+    assign b_shift_to_bottom = b_reg;
 
     //========================================================
     // A Register & Shift (Right Shift)
@@ -64,7 +68,7 @@ module PE (
     //========================================================
     // 5-stage Multiply Pipeline
     //========================================================
-    assign mul_input = a_reg * b_reg_internal; // In practice, consider synthesis constraints such as multi-cycle
+    assign mul_input = a_reg * b_reg; // In practice, consider synthesis constraints such as multi-cycle
 
     integer i;
     always @(posedge Clock or negedge rst_n) begin

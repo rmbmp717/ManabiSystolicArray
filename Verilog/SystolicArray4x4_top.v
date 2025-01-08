@@ -5,13 +5,12 @@ module SystolicArray4x4_top (
     input  wire         Clock,
     input  wire         rst_n,
     input  wire         data_clear,
+    input  wire         en_b_shift_bottom,
     input  wire         en_shift_right,
     input  wire         en_shift_bottom,
 
-    input  wire [15:0]  b_reg_array_flat [0:15],
-    input  wire         b_we_array_flat  [0:15],
-
     input  wire [15:0]  a_left_in_flat   [0:3],
+    input  wire [15:0]  b_top_in_flat    [0:3],
     input  wire [15:0]  ps_top_in_flat   [0:3],
 
     output wire [15:0]  ps_bottom_out_flat [0:3]
@@ -24,13 +23,12 @@ module SystolicArray4x4_top (
         .Clock              (Clock),
         .rst_n              (rst_n),
         .data_clear         (data_clear),
+        .en_b_shift_bottom  (en_b_shift_bottom),
         .en_shift_right     (en_shift_right),
         .en_shift_bottom    (en_shift_bottom),
 
-        .b_reg_array_flat   (b_reg_array_flat),
-        .b_we_array_flat    (b_we_array_flat),
-
         .a_left_in_flat     (a_left_in_flat),
+        .b_top_in_flat      (b_top_in_flat),
         .ps_top_in_flat     (ps_top_in_flat),
 
         .ps_bottom_out_flat (ps_bottom_out_flat)

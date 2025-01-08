@@ -84,15 +84,13 @@ async def test_systolic_array(dut):
     # 2. Reset sequence
     dut.rst_n.value = 0
     dut.data_clear.value = 1
+    dut.en_b_shift_bottom.value = 0
     dut.en_shift_right.value = 0
     dut.en_shift_bottom.value = 0
 
     # Initialize B values
     for r in range(4):
-        for c in range(4):
-            flat_index = r * 4 + c
-            getattr(dut, f"b_we_array_flat[{flat_index}]").value = 0
-            getattr(dut, f"b_reg_array_flat[{flat_index}]").value = int(0)
+        getattr(dut, f"b_top_in_flat[{r}]").value = int(0)
 
     # Initialize A values
     for r in range(4):
@@ -103,7 +101,7 @@ async def test_systolic_array(dut):
         getattr(dut, f"ps_top_in_flat[{c}]").value = int(0)
 
     # Wait for a few cycles
-    for _ in range(25):
+    for _ in range(5):
         await RisingEdge(dut.Clock)
 
     dut.rst_n.value = 1
@@ -125,18 +123,25 @@ async def test_systolic_array(dut):
     # 4. Write B values into each PE
     # Cast NumPy type to standard Python int
     for r in range(4):
-        for c in range(4):
-            flat_index = r * 4 + c
-            getattr(dut, f"b_we_array_flat[{flat_index}]").value = 1
-            getattr(dut, f"b_reg_array_flat[{flat_index}]").value = int(B_np[r][c])
-        await RisingEdge(dut.Clock)
-        for c in range(4):
-            flat_index = r * 4 + c
-            getattr(dut, f"b_we_array_flat[{flat_index}]").value = 0
+        getattr(dut, f"b_top_in_flat[{r}]").value = 0
 
     # Debug
     print("==============INPUT B=====================")
+    for row_i in range(4):
+        for r in range(4):
+            print("r=", r , "row_i=", row_i)
+            getattr(dut, f"b_top_in_flat[{r}]").value = int(B_np[3-row_i][r])
+            print(int(B_np[row_i][r]))
+
+        data_trace_screen(dut)
+        await RisingEdge(dut.Clock)
+        dut.en_b_shift_bottom.value = 1
+        await RisingEdge(dut.Clock)
+        dut.en_b_shift_bottom.value = 0
+
     data_trace_screen(dut)
+
+    print("==============INPUT B END=====================")
 
     # 5. Shift A values into the leftmost PEs and perform partial_sum shifts
     for row_i in range(4 + (4 - 1)):
@@ -145,7 +150,7 @@ async def test_systolic_array(dut):
                 getattr(dut, f"a_left_in_flat[{r}]").value = int(A_np[row_i][r])
             else:
                 getattr(dut, f"a_left_in_flat[{r}]").value = int(0)
-
+        
         print("row_i=", row_i)
         await RisingEdge(dut.Clock)
 
