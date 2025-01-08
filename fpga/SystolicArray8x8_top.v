@@ -4,6 +4,7 @@ module SystolicArray8x8_top (
     input  wire         Clock,
     input  wire         rst_n,
     input  wire         data_clear,
+    input  wire         en_b_shift_bottom,
     input  wire         en_shift_right,
     input  wire         en_shift_bottom,
 
@@ -115,6 +116,16 @@ module SystolicArray8x8_top (
         end
     endgenerate
 
+    wire [15:0] ps_top_in_flat [0:7]; // 配列型の信号を定義
+    assign ps_top_in_flat[0] = 16'd0;
+    assign ps_top_in_flat[1] = 16'd0;
+    assign ps_top_in_flat[2] = 16'd0;
+    assign ps_top_in_flat[3] = 16'd0;
+    assign ps_top_in_flat[4] = 16'd0;
+    assign ps_top_in_flat[5] = 16'd0;
+    assign ps_top_in_flat[6] = 16'd0;
+    assign ps_top_in_flat[7] = 16'd0;
+
     // =================================================================
     //  (6) サブモジュール（SystolicArray8x8）をインスタンス化
     // =================================================================
@@ -122,12 +133,13 @@ module SystolicArray8x8_top (
         .Clock               (Clock),
         .rst_n               (rst_n),
         .data_clear          (data_clear),
+        .en_b_shift_bottom   (en_b_shift_bottom),
         .en_shift_right      (en_shift_right),
         .en_shift_bottom     (en_shift_bottom),
 
         .a_left_in_flat      (w_a_left_in_flat),
         .b_top_in_flat       (w_b_reg_array_flat),
-        .ps_top_in_flat      ({16'd0, 16'd0, 16'd0, 16'd0, 16'd0, 16'd0, 16'd0, 16'd0}),
+        .ps_top_in_flat      (ps_top_in_flat),
 
         .ps_bottom_out_flat  (ps_bottom_out_flat)
     );
