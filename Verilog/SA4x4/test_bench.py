@@ -164,25 +164,25 @@ async def test_systolic_array(dut):
         dut.en_shift_right.value = 0
 
         # Wait
-        for _ in range(3):
+        for _ in range(1):
             await RisingEdge(dut.Clock)
 
         # Debug
         print("==============After SHIFT=====================")
         data_trace_screen(dut)
 
-        # Wait
-        for _ in range(5):
+        # Wait mul : pipeline = 5
+        for _ in range(5):      
             await RisingEdge(dut.Clock)
 
-        # Shift partial_sum downward
+        # Shift partial_sum downward : col = 4
         for _ in range(4):
             dut.en_shift_bottom.value = 1
             await RisingEdge(dut.Clock)
             dut.en_shift_bottom.value = 0
 
         # Wait
-        for _ in range(2):
+        for _ in range(1):
             await RisingEdge(dut.Clock)
 
         C_tmp = np.zeros(4, dtype=int)
