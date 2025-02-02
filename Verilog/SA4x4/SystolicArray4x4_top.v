@@ -34,12 +34,38 @@ module SystolicArray4x4_top (
         .ps_bottom_out_flat (ps_bottom_out_flat)
     );
 
+    RV32IM uRV32IM(
+        .clock              (Clock),
+        .reset_n            (rst_n),
+        .uart_out           (),
+        .gpio_in            ()
+    );
+
     // =================================================================
     // 2. VCDダンプ設定 (Icarus Verilog 用)
     // =================================================================
+    // Debug
+    wire [15:0] a_left_in_flat_0;
+    wire [15:0] a_left_in_flat_1;
+    wire [15:0] a_left_in_flat_2;
+    wire [15:0] a_left_in_flat_3;
+    assign a_left_in_flat_0 = a_left_in_flat[0];
+    assign a_left_in_flat_1 = a_left_in_flat[1];
+    assign a_left_in_flat_2 = a_left_in_flat[2];
+    assign a_left_in_flat_3 = a_left_in_flat[3];
+
+    wire [15:0] ps_bottom_out_flat_0;
+    wire [15:0] ps_bottom_out_flat_1;
+    wire [15:0] ps_bottom_out_flat_2;
+    wire [15:0] ps_bottom_out_flat_3;
+    assign ps_bottom_out_flat_0 = ps_bottom_out_flat[0];
+    assign ps_bottom_out_flat_1 = ps_bottom_out_flat[1];
+    assign ps_bottom_out_flat_2 = ps_bottom_out_flat[2];
+    assign ps_bottom_out_flat_3 = ps_bottom_out_flat[3];
+
     initial begin
-        $dumpfile("wave.vcd");       // ダンプするファイル名
-        $dumpvars(1, SystolicArray4x4_top);     
+        $dumpfile("sa4x4.vcd");       // ダンプするファイル名
+        $dumpvars(0, SystolicArray4x4_top);     
         $dumpvars(0, SystolicArray4x4_top.u_systolic);     
     end
 
