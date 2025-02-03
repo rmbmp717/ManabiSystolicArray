@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 
 module SystolicArray4x4_top (
-    // 上位から与えられるポート
+    // Ports from the upper module
     input  wire         Clock,
     input  wire         rst_n,
     input  wire         data_clear,
@@ -16,8 +16,11 @@ module SystolicArray4x4_top (
     output wire [15:0]  ps_bottom_out_flat [0:3]
 );
 
+    wire       uart_rw;
+    wire [7:0] uart_data;
+
     // =================================================================
-    // 1. サブモジュール（SystolicArray4x4）をインスタンス化
+    // 1. Instantiate the submodule (SystolicArray4x4)
     // =================================================================
     SystolicArray4x4 u_systolic (
         .Clock              (Clock),
@@ -34,17 +37,82 @@ module SystolicArray4x4_top (
         .ps_bottom_out_flat (ps_bottom_out_flat)
     );
 
+    wire [15:0] bm_data0;
+    wire [15:0] bm_data1;
+    wire [15:0] bm_data2;
+    wire [15:0] bm_data3;
+    assign  bm_data0 = ps_bottom_out_flat[0];
+    assign  bm_data1 = ps_bottom_out_flat[1];
+    assign  bm_data2 = ps_bottom_out_flat[2];
+    assign  bm_data3 = ps_bottom_out_flat[3];
+
+    // RISC-V processor instance
     RV32IM uRV32IM(
         .clock              (Clock),
         .reset_n            (rst_n),
-        .uart_out           (),
-        .gpio_in            ()
+        .uart_out           ({{uart_rw}, {uart_data}}),
+        //.DMA_in             ({{bm_data3[7:0]}, {bm_data2[7:0]}, {bm_data1[7:0]}, {bm_data0[7:0]}})
+        .DMA_in             ({{8'h01}, {8'h02}, {8'h03}, {8'h04}})
+    );
+
+    // Shift enable for right shift
+    shift_module #(
+        .EN_SHIFT_ADDR      (8'h02)
+        ) right_shift_module(
+        .Clock              (Clock),
+        .rst_n              (rst_n),
+        .uart_rw            (uart_rw),
+        .uart_in            (uart_data),
+        .shift              (en_shift_right)
+    );
+
+    // Shift enable for bottom shift
+    shift_module #(
+        .EN_SHIFT_ADDR      (8'h04)
+        ) bottom_shift_module(
+        .Clock              (Clock),
+        .rst_n              (rst_n),
+        .uart_rw            (uart_rw),
+        .uart_in            (uart_data),
+        .shift              (en_shift_bottom)
+    );
+
+    // Data input module for matrix A
+    data_16x4_module #(
+        .DATA_WRITE_ADDR    (8'h6)
+    ) a_data_16x4_module(
+        // Clock & Reset
+        .Clock              (Clock),
+        .rst_n              (rst_n),
+        // UART interface
+        .uart_rw            (uart_rw),
+        .uart_in            (uart_data),
+        .saved_data0        (a_left_in_flat[0]),
+        .saved_data1        (a_left_in_flat[1]),
+        .saved_data2        (a_left_in_flat[2]),
+        .saved_data3        (a_left_in_flat[3])
+    );
+
+    // Data input module for matrix B
+    data_16x4_module #(
+        .DATA_WRITE_ADDR    (8'h8)
+    ) b_data_16x4_module(
+        // Clock & Reset
+        .Clock              (Clock),
+        .rst_n              (rst_n),
+        // UART interface
+        .uart_rw            (uart_rw),
+        .uart_in            (uart_data),
+        .saved_data0        (b_top_in_flat[0]),
+        .saved_data1        (b_top_in_flat[1]),
+        .saved_data2        (b_top_in_flat[2]),
+        .saved_data3        (b_top_in_flat[3])
     );
 
     // =================================================================
-    // 2. VCDダンプ設定 (Icarus Verilog 用)
+    // 2. VCD dump settings (for Icarus Verilog simulation)
     // =================================================================
-    // Debug
+    // Debugging signals
     wire [15:0] a_left_in_flat_0;
     wire [15:0] a_left_in_flat_1;
     wire [15:0] a_left_in_flat_2;
@@ -64,9 +132,11 @@ module SystolicArray4x4_top (
     assign ps_bottom_out_flat_3 = ps_bottom_out_flat[3];
 
     initial begin
-        $dumpfile("sa4x4.vcd");       // ダンプするファイル名
-        $dumpvars(0, SystolicArray4x4_top);     
-        $dumpvars(0, SystolicArray4x4_top.u_systolic);     
+        $dumpfile("sa4x4.vcd");       // Output file name for VCD dump
+        $dumpvars(1, SystolicArray4x4_top);     
+        $dumpvars(1, SystolicArray4x4_top.u_systolic);     
+        $dumpvars(1, SystolicArray4x4_top.uRV32IM);     
+        $dumpvars(1, SystolicArray4x4_top.a_data_16x4_module);     
     end
 
 endmodule
