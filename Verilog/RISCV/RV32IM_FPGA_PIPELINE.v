@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-//`define GPIO
+`define DMA_ON
 
 module RV32IM(
     input wire clock,
@@ -8,7 +8,7 @@ module RV32IM(
     //output wire [31:0] op_out,
     //output wire [31:0] alu_out,
     output wire [8:0] uart_out,
-    input wire [31:0] gpio_in
+    input wire [31:0] DMA_in
 );
 /*
     // 追加: VCD ダンプ用ブロック
@@ -18,8 +18,8 @@ module RV32IM(
     end
 */
 
-    // GPIO ADDR
-    localparam [31:0] GPIO_ADDR = 32'd1022 ; // ADDRESS for UART DATA
+    // DMA ADDR
+    localparam [31:0] DMA_ADDR = 32'h400 ; // ADDRESS for DMA ADDRESS
 
     // ===============================================================
     // State counter
@@ -52,14 +52,14 @@ module RV32IM(
 
     // MEMORY 2048 word
     reg [7:0] mem[0:2047]; // MEMORY 2048 word
-    //initial $readmemh("program.hex", mem); // MEMORY INITIALIZE
+    initial $readmemh("program.hex", mem); // MEMORY INITIALIZE
 
     // UART OUTPUT and CYCLE COUNTER
     reg [8:0] uart = 9'b0; // uart[8] for output sign, uart[7:0] for data
     assign uart_out = uart;
 
-    localparam [31:0] UART_MMIO_ADDR = 32'h0000_fff0; // ADDRESS 0xfff0 for UART DATA
-    localparam [31:0] UART_MMIO_FLAG = 32'h0000_fff1; // ADDRESS 0xfff1 for UART FLAG
+    localparam [31:0] UART_MMIO_ADDR = 32'h4F0; // ADDRESS for UART DATA
+    localparam [31:0] UART_MMIO_FLAG = 32'h4F1; // ADDRESS for UART FLAG
     reg [31:0] counter = 32'b0;
     localparam [31:0] COUNTER_MMIO_ADDR = 32'h0000_fff4; // ADDRESS 0xfff4 for COUNTER
 
@@ -425,11 +425,11 @@ module RV32IM(
                 endcase
             end else begin
             // MEMORY MAPPED IO to GPIO
-            `ifdef GPIO
-                mem[GPIO_ADDR]   <= gpio_in[31:24];
-                mem[GPIO_ADDR+1] <= gpio_in[23:16];
-                mem[GPIO_ADDR+2] <= gpio_in[15:8];
-                mem[GPIO_ADDR+3] <= gpio_in[7:0];
+            `ifdef DMA_ON
+                mem[DMA_ADDR]       <= DMA_in[7:0];
+                mem[DMA_ADDR+1]     <= DMA_in[15:8];
+                mem[DMA_ADDR+2]     <= DMA_in[23:16];
+                mem[DMA_ADDR+3]     <= DMA_in[31:24];
             `endif
             end
 
