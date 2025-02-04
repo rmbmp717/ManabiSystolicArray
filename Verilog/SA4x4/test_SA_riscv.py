@@ -97,6 +97,7 @@ async def test_systolic_array(dut):
     # 1. Clock generation
     clock = Clock(dut.Clock, 10, units="ns")  # 10ns period = 100MHz
     cocotb.start_soon(clock.start())
+    data_trace_screen(dut)
 
     # 2. Reset sequence
     dut.rst_n.value = 0
@@ -118,6 +119,7 @@ async def test_systolic_array(dut):
     # Wait for stabilization
     for _ in range(5000):
         await RisingEdge(dut.Clock)
+    data_trace_screen(dut)
 
     print("=============== Output data =======================")
     # --- メモリダンプを呼び出す ---

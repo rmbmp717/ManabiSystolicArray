@@ -132,7 +132,7 @@ module SystolicArray4x4_top (
 
     // Data input module for PS in
     data_16x4_module #(
-        .DATA_WRITE_ADDR    (8'hFB)
+        .DATA_WRITE_ADDR    (8'hFA)
     ) ps_in_module(
         // Clock & Reset
         .Clock              (Clock),
@@ -177,6 +177,15 @@ module SystolicArray4x4_top (
     assign ps_bottom_out_flat_1 = ps_bottom_out_flat[1];
     assign ps_bottom_out_flat_2 = ps_bottom_out_flat[2];
     assign ps_bottom_out_flat_3 = ps_bottom_out_flat[3];
+
+    wire [15:0] ps_top_in_flat_0;
+    wire [15:0] ps_top_in_flat_1;
+    wire [15:0] ps_top_in_flat_2;
+    wire [15:0] ps_top_in_flat_3;
+    assign ps_top_in_flat_0 = ps_top_in_flat[0];
+    assign ps_top_in_flat_1 = ps_top_in_flat[1];
+    assign ps_top_in_flat_2 = ps_top_in_flat[2];
+    assign ps_top_in_flat_3 = ps_top_in_flat[3];
 
     initial begin
         $dumpfile("sa4x4.vcd");       // Output file name for VCD dump
