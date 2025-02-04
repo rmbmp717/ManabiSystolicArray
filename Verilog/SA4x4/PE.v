@@ -34,6 +34,9 @@ module PE (
     wire [15:0] mul_input;             // Multiplier input (A * B)
     reg [15:0] mul_result;             // Multiplier output (final result from 5th stage)
 
+    // State counter
+    reg [3:0] state_count; 
+
     //========================================================
     // B Register Write
     //========================================================
@@ -43,6 +46,26 @@ module PE (
         end else if (en_b_shift_bottom) begin
             b_reg <= b_in;
         end 
+    end
+
+    // Output: Pass b_reg to the right neighbor
+    assign b_shift_to_bottom = b_reg;
+
+    //========================================================
+    // State counter
+    //========================================================
+    always @(posedge Clock or negedge rst_n) begin
+        if (!rst_n) begin
+            state_count <= 4'd0;
+        end else if (en_shift_bottom) begin
+            state_count <= 4'd0;
+        end else begin
+            if(state_count==4'd5) begin
+                state_count <= state_count;
+            end else begin
+                state_count <= state_count + 1;
+            end
+        end
     end
 
     // Output: Pass b_reg to the right neighbor
@@ -81,12 +104,14 @@ module PE (
                 mul_pipe[i] <= 16'd0;
             end
         end else begin
-            // Shift register structure
-            mul_pipe[0] <= mul_input;       // Stage 1
-            mul_pipe[1] <= mul_pipe[0];    // Stage 2
-            mul_pipe[2] <= mul_pipe[1];    // Stage 3
-            mul_pipe[3] <= mul_pipe[2];    // Stage 4
-            mul_pipe[4] <= mul_pipe[3];    // Stage 5
+            if(state_count<=5) begin
+                // Shift register structure
+                mul_pipe[0] <= mul_input;       // Stage 1
+                mul_pipe[1] <= mul_pipe[0];    // Stage 2
+                mul_pipe[2] <= mul_pipe[1];    // Stage 3
+                mul_pipe[3] <= mul_pipe[2];    // Stage 4
+                mul_pipe[4] <= mul_pipe[3];    // Stage 5
+            end
         end
     end
 

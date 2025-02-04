@@ -46,32 +46,53 @@ module SystolicArray4x4_top (
     assign  bm_data2 = ps_bottom_out_flat[2];
     assign  bm_data3 = ps_bottom_out_flat[3];
 
+    wire [31:0] dma_in_data;
+    assign  dma_in_data = {{bm_data3[7:0]}, {bm_data2[7:0]}, {bm_data1[7:0]}, {bm_data0[7:0]}};
+    //assign  dma_in_data = 32'h01020304;
+
     // RISC-V processor instance
     RV32IM uRV32IM(
+        // Clock & Reset
         .clock              (Clock),
         .reset_n            (rst_n),
         .uart_out           ({{uart_rw}, {uart_data}}),
-        //.DMA_in             ({{bm_data3[7:0]}, {bm_data2[7:0]}, {bm_data1[7:0]}, {bm_data0[7:0]}})
-        .DMA_in             ({{8'h01}, {8'h02}, {8'h03}, {8'h04}})
+        .DMA_in             (dma_in_data)
     );
 
     // Shift enable for right shift
     shift_module #(
-        .EN_SHIFT_ADDR      (8'h02)
+        .EN_SHIFT_ADDR      (8'hFF)
         ) right_shift_module(
+        // Clock & Reset
         .Clock              (Clock),
         .rst_n              (rst_n),
+        // UART interface
         .uart_rw            (uart_rw),
         .uart_in            (uart_data),
         .shift              (en_shift_right)
     );
 
-    // Shift enable for bottom shift
+    // Shift enable for b data shift
     shift_module #(
-        .EN_SHIFT_ADDR      (8'h04)
-        ) bottom_shift_module(
+        .EN_SHIFT_ADDR      (8'hFE)
+        ) b_shift_module(
+        // Clock & Reset
         .Clock              (Clock),
         .rst_n              (rst_n),
+        // UART interface
+        .uart_rw            (uart_rw),
+        .uart_in            (uart_data),
+        .shift              (en_b_shift_bottom)
+    );
+
+    // Shift enable for bottom shift
+    shift_module #(
+        .EN_SHIFT_ADDR      (8'hFD)
+        ) bottom_shift_module(
+        // Clock & Reset
+        .Clock              (Clock),
+        .rst_n              (rst_n),
+        // UART interface
         .uart_rw            (uart_rw),
         .uart_in            (uart_data),
         .shift              (en_shift_bottom)
@@ -79,7 +100,7 @@ module SystolicArray4x4_top (
 
     // Data input module for matrix A
     data_16x4_module #(
-        .DATA_WRITE_ADDR    (8'h6)
+        .DATA_WRITE_ADDR    (8'hFC)
     ) a_data_16x4_module(
         // Clock & Reset
         .Clock              (Clock),
@@ -95,7 +116,7 @@ module SystolicArray4x4_top (
 
     // Data input module for matrix B
     data_16x4_module #(
-        .DATA_WRITE_ADDR    (8'h8)
+        .DATA_WRITE_ADDR    (8'hFB)
     ) b_data_16x4_module(
         // Clock & Reset
         .Clock              (Clock),
@@ -108,6 +129,23 @@ module SystolicArray4x4_top (
         .saved_data2        (b_top_in_flat[2]),
         .saved_data3        (b_top_in_flat[3])
     );
+
+    // Data input module for PS in
+    data_16x4_module #(
+        .DATA_WRITE_ADDR    (8'hFB)
+    ) ps_in_module(
+        // Clock & Reset
+        .Clock              (Clock),
+        .rst_n              (rst_n),
+        // UART interface
+        .uart_rw            (uart_rw),
+        .uart_in            (uart_data),
+        .saved_data0        (ps_top_in_flat[0]),
+        .saved_data1        (ps_top_in_flat[1]),
+        .saved_data2        (ps_top_in_flat[2]),
+        .saved_data3        (ps_top_in_flat[3])
+    );
+
 
     // =================================================================
     // 2. VCD dump settings (for Icarus Verilog simulation)
@@ -122,6 +160,15 @@ module SystolicArray4x4_top (
     assign a_left_in_flat_2 = a_left_in_flat[2];
     assign a_left_in_flat_3 = a_left_in_flat[3];
 
+    wire [15:0] b_top_in_flat_0;
+    wire [15:0] b_top_in_flat_1;
+    wire [15:0] b_top_in_flat_2;
+    wire [15:0] b_top_in_flat_3;
+    assign b_top_in_flat_0 = b_top_in_flat[0];
+    assign b_top_in_flat_1 = b_top_in_flat[1];
+    assign b_top_in_flat_2 = b_top_in_flat[2];
+    assign b_top_in_flat_3 = b_top_in_flat[3];
+
     wire [15:0] ps_bottom_out_flat_0;
     wire [15:0] ps_bottom_out_flat_1;
     wire [15:0] ps_bottom_out_flat_2;
@@ -134,9 +181,13 @@ module SystolicArray4x4_top (
     initial begin
         $dumpfile("sa4x4.vcd");       // Output file name for VCD dump
         $dumpvars(1, SystolicArray4x4_top);     
-        $dumpvars(1, SystolicArray4x4_top.u_systolic);     
+        $dumpvars(0, SystolicArray4x4_top.u_systolic);     
         $dumpvars(1, SystolicArray4x4_top.uRV32IM);     
+        $dumpvars(1, SystolicArray4x4_top.right_shift_module);    
+        $dumpvars(1, SystolicArray4x4_top.b_shift_module);    
+        $dumpvars(1, SystolicArray4x4_top.bottom_shift_module);    
         $dumpvars(1, SystolicArray4x4_top.a_data_16x4_module);     
+        $dumpvars(1, SystolicArray4x4_top.b_data_16x4_module);   
     end
 
 endmodule

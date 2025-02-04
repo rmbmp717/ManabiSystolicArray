@@ -22,6 +22,8 @@ always @(posedge Clock or negedge rst_n) begin
         shift_en <= 0;
     end else if (uart_rw & (uart_in==EN_SHIFT_ADDR)) begin
         shift_en <= 1;
+    end else begin
+        shift_en <= 0;
     end
 end
 

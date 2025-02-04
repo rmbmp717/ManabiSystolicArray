@@ -122,4 +122,4 @@ async def test_systolic_array(dut):
     print("=============== Output data =======================")
     # --- メモリダンプを呼び出す ---
     # たとえば、先頭64バイトだけダンプする場合:
-    dump_memory(dut, start_addr=0x0000, end_addr=0x0300, line_width=16)
+    dump_memory(dut, start_addr=0x0000, end_addr=0x0320, line_width=16)
