@@ -52,20 +52,6 @@ int _start(void)
     *p2 = B_DATA_SHIFT;
     *p = 0x00;
 
-    // A Matrix データ転送
-    for (int j = 0; j < 4; j++) {
-        *p2 = A_DATA_IN;
-        *p = 0x00;
-        for (int i = 0; i < 4; i++) {
-            *p2 = arrA[i][3-j] % 256;   
-            *p = 0x00;
-            *p2 = 0;
-            *p = 0x00;
-        }
-        *p2 = RIGHT_SHIFT;
-        *p = 0x00;
-    }
-
 
     // B Matrix データ転送
     for (int j = 0; j < 4; j++) {
@@ -81,28 +67,49 @@ int _start(void)
         *p = 0x00;
     }
 
-    // 下シフト x 4
-    for (int i = 0; i < 4; i++) {
-        *p2 = BOTTOM_SHIFT;
-        *p = 0x00;
-    }
-
-    // wait
-    for (int i = 0; i < 20; i++) {
-        *p = 0x00;
-    }
-
-    // DMAのデータを読み取る
-    volatile uint32_t *read_ptr0 = (volatile uint32_t *)DMA_ADDR0;
-    uint32_t read_data0 = *read_ptr0;
-    volatile uint32_t *read_ptr1 = (volatile uint32_t *)DMA_ADDR1;
-    uint32_t read_data1 = *read_ptr1;
+    //
+    //  ============ SA Start ==============
+    //
 
     // 読み取ったデータをDATA_OUT_ADDRに書き込む
     volatile uint32_t *p3 = (volatile uint32_t *)(uintptr_t) DATA_OUT_ADDR;
-    *p3 = read_data0;
-    volatile uint32_t *p4 = (volatile uint32_t *)(uintptr_t) DATA_OUT_ADDR + 4;
-    *p4 = read_data1;
+
+    // A Matrix データ転送
+    for (int j = 0; j < (4 + 0); j++) {
+        *p2 = A_DATA_IN;
+        *p = 0x00;
+        for (int i = 0; i < 4; i++) {
+            //*p2 = arrA[i][3-j] % 256;   
+            *p2 = arrA[j][i] % 256;   
+            *p = 0x00;
+            *p2 = 0;
+            *p = 0x00;
+        }
+        *p2 = RIGHT_SHIFT;
+        *p = 0x00;
+
+        // 下演算シフト x 4
+        for (int i = 0; i < 4; i++) {
+            *p2 = BOTTOM_SHIFT;
+            *p = 0x00;
+        }
+
+        // wait
+        for (int i = 0; i < 20; i++) {
+            *p = 0x00;
+        }
+
+        // DMA0,1のデータを読み取る
+        volatile uint32_t *read_ptr0 = (volatile uint32_t *)DMA_ADDR0;
+        uint32_t read_data0 = *read_ptr0;
+        volatile uint32_t *read_ptr1 = (volatile uint32_t *)DMA_ADDR1;
+        uint32_t read_data1 = *read_ptr1;
+
+        // 読み取ったデータをDATA_OUT_ADDRに書き込む
+        *p3 = read_data0;   *p3++;
+        *p3 = read_data1;   *p3++;
+
+    }
 
     // 無限ループ
     while (1) {}
