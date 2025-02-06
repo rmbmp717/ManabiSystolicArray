@@ -18,7 +18,7 @@ OBJCOPY      = riscv64-unknown-elf-objcopy
 
 # C ソースファイルやリンカスクリプトなど
 C_DIR 		 = ../../c_program
-MAIN_C       = $(C_DIR)/SA2.c
+MAIN_C       = $(C_DIR)/SA3.c
 LINKER       = linker.ld
 ELF          = program.elf
 HEX          = program.hex

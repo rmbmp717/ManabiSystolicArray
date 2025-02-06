@@ -8,8 +8,23 @@ def python_systolic_model(A, B):
     """
     A, B: NumPy arrays with shape=(4,4)
     Returns: C = A×B (4x4 matrix multiplication)
+    This version explicitly simulates systolic array behavior.
     """
-    return A @ B  # NumPy matrix multiplication
+    # Ensure that A and B are NumPy arrays
+    A = np.array(A)
+    B = np.array(B)
+    
+    # Initialize the result matrix C
+    C = np.zeros((4, 4))
+
+    # Iterate through rows of A and columns of B
+    for i in range(4):
+        for j in range(4):
+            # Perform dot product of the i-th row of A and the j-th column of B
+            C[i, j] = sum(A[i, k] * B[k, j] for k in range(4))
+
+    return C
+
 
 def resolve_x(signal_handle):
     """
@@ -50,6 +65,7 @@ def data_trace_screen(dut):
     # Create 4x4 arrays for a_reg and b_reg
     a_matrix = []
     b_matrix = []
+    c_matrix = []
 
     for r in range(NUM_ROWS):
         a_row = []
@@ -87,6 +103,31 @@ def data_trace_screen(dut):
     print("]")
     print("")
 
+    # Display a x b matrix
+    a_matrix = np.array(a_matrix)
+    b_matrix = np.array(b_matrix)     
+    a_matrix_rotated = np.flipud(a_matrix.T)
+    c_matrix = np.dot(a_matrix_rotated, b_matrix)
+
+    # Display a_reg matrix
+    print(">>> a_reg rotated:")
+    print("[")
+    for r in range(NUM_ROWS):
+        # Display elements of row r separated by spaces
+        row_str = " ".join(str(val) for val in a_matrix_rotated[r])
+        print(f" [{row_str}]")
+    print("]")
+
+    print("")
+
+    print(">>> a x b matrix:")
+    print("[")
+    for r in range(NUM_ROWS):
+        row_str = " ".join(str(val) for val in c_matrix[r])
+        print(f" [{row_str}]")
+    print("]")
+    print("")
+
 @cocotb.test()
 async def test_systolic_array(dut):
     """
@@ -117,11 +158,11 @@ async def test_systolic_array(dut):
         await RisingEdge(dut.Clock)
 
     # Wait for stabilization
-    for _ in range(5000):
+    for _ in range(10000):
         await RisingEdge(dut.Clock)
     data_trace_screen(dut)
 
     print("=============== Output data =======================")
     # --- メモリダンプを呼び出す ---
     # たとえば、先頭64バイトだけダンプする場合:
-    dump_memory(dut, start_addr=0x0000, end_addr=0x0320, line_width=16)
+    dump_memory(dut, start_addr=0x0000, end_addr=0x0400, line_width=16)
