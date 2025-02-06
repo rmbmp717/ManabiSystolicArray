@@ -1,5 +1,6 @@
 `timescale 1ns / 1ps
 `define DMA_ON
+`define SP_MODE
 
 module RV32IM(
     input wire clock,
@@ -8,7 +9,8 @@ module RV32IM(
     //output wire [31:0] op_out,
     //output wire [31:0] alu_out,
     output wire [8:0] uart_out,
-    input wire [31:0] DMA_in
+    input wire [31:0] DMA_in0,
+    input wire [31:0] DMA_in1
 );
 /*
     // 追加: VCD ダンプ用ブロック
@@ -19,7 +21,8 @@ module RV32IM(
 */
 
     // DMA ADDR
-    localparam [31:0] DMA_ADDR = 32'h400 ; // ADDRESS for DMA ADDRESS
+    localparam [31:0] DMA_ADDR0 = 32'h400 ; // ADDRESS for DMA ADDRESS
+    localparam [31:0] DMA_ADDR1 = 32'h404 ; // ADDRESS for DMA ADDRESS
 
     // ===============================================================
     // State counter
@@ -424,12 +427,18 @@ module RV32IM(
                     default: begin end // ILLEGAL
                 endcase
             end else begin
-            // MEMORY MAPPED IO to GPIO
+            // MEMORY MAPPED IO to DMA
             `ifdef DMA_ON
-                mem[DMA_ADDR]       <= DMA_in[7:0];
-                mem[DMA_ADDR+1]     <= DMA_in[15:8];
-                mem[DMA_ADDR+2]     <= DMA_in[23:16];
-                mem[DMA_ADDR+3]     <= DMA_in[31:24];
+                // DMA 0
+                mem[DMA_ADDR0]       <= DMA_in0[7:0];
+                mem[DMA_ADDR0+1]     <= DMA_in0[15:8];
+                mem[DMA_ADDR0+2]     <= DMA_in0[23:16];
+                mem[DMA_ADDR0+3]     <= DMA_in0[31:24];
+                // DMA 1
+                mem[DMA_ADDR1]       <= DMA_in1[7:0];
+                mem[DMA_ADDR1+1]     <= DMA_in1[15:8];
+                mem[DMA_ADDR1+2]     <= DMA_in1[23:16];
+                mem[DMA_ADDR1+3]     <= DMA_in1[31:24];
             `endif
             end
 
@@ -458,7 +467,11 @@ module RV32IM(
         if (!reset_n) begin
             for (i = 0; i < 32; i = i + 1) begin
                 if(i == 2) begin
+                    `ifdef SP_MODE
                     regs[i] = 16'h04FF;     // SP <= 0x04FF
+                    `else
+                    regs[i] = 32'h0;
+                    `endif
                 end else begin
                     regs[i] <= 32'h0;
                 end
