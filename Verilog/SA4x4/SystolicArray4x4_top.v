@@ -46,9 +46,10 @@ module SystolicArray4x4_top (
     assign  bm_data2 = ps_bottom_out_flat[2];
     assign  bm_data3 = ps_bottom_out_flat[3];
 
-    wire [31:0] dma_in_data;
-    assign  dma_in_data = {{bm_data3[7:0]}, {bm_data2[7:0]}, {bm_data1[7:0]}, {bm_data0[7:0]}};
-    //assign  dma_in_data = 32'h01020304;
+    wire [31:0] dma_in_data0;
+    wire [31:0] dma_in_data1;
+    assign  dma_in_data0 = {{bm_data1}, {bm_data0}};
+    assign  dma_in_data1 = {{bm_data3}, {bm_data2}};
 
     // RISC-V processor instance
     RV32IM uRV32IM(
@@ -56,7 +57,8 @@ module SystolicArray4x4_top (
         .clock              (Clock),
         .reset_n            (rst_n),
         .uart_out           ({{uart_rw}, {uart_data}}),
-        .DMA_in             (dma_in_data)
+        .DMA_in0            (dma_in_data0),
+        .DMA_in1            (dma_in_data1)
     );
 
     // Shift enable for right shift
@@ -190,7 +192,7 @@ module SystolicArray4x4_top (
     initial begin
         $dumpfile("sa4x4.vcd");       // Output file name for VCD dump
         $dumpvars(1, SystolicArray4x4_top);     
-        $dumpvars(0, SystolicArray4x4_top.u_systolic);     
+        $dumpvars(1, SystolicArray4x4_top.u_systolic);     
         $dumpvars(1, SystolicArray4x4_top.uRV32IM);     
         $dumpvars(1, SystolicArray4x4_top.right_shift_module);    
         $dumpvars(1, SystolicArray4x4_top.b_shift_module);    
