@@ -1,4 +1,4 @@
-# ManabiSystollicArray (Verilog HDL & DSLX & C++ & Python)
+# ManabiSystollicArray (Verilog HDL & Google DSLX & C++ & Python)
 
 ## Introduction
 
