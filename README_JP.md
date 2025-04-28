@@ -61,6 +61,10 @@
                                   
 ```
 
+## シミュレーション波形
+- 波形でも行列積の出力値が正しいことを確認しました。<br>
+  ![シミュレーション波形](https://github.com/rmbmp717/ManabiSystolicArr/blob/main/image/SA_wave.jpg?raw=true)
+
 ## 設計の詳細
 
 1. **Pythonモデル**  
