@@ -33,7 +33,8 @@
 2. 実行バイナリを`.hex`ファイルに変換  
 3. cocotbによるシミュレーションを正常実行
 
-   ```bash
+### Command-line Output
+```bash
 $ riscv64-unknown-elf-gcc -O2 -o main main.cpp
 main.cpp: In function ‘int main()’:
 main.cpp:10:5: warning: unused variable ‘foo’ [-Wunused-variable]
