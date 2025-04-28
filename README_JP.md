@@ -12,8 +12,8 @@ NeuralNetworkの行列計算の重みのデータ転送量を削減する回路�
 
 ## ブロック図
 
-![シストリックアレイ](https://github.com/rmbmp717/ManabiSystollicArray/blob/main/image/RP5_GPU.jpg?raw=true)
-![現実的なシストリックアレイ](https://github.com/rmbmp717/ManabiSystollicArray/blob/main/image/RP5_GPU.jpg?raw=true)
+![シストリックアレイ](https://github.com/rmbmp717/ManabiSystollicArray/blob/main/image/SA_zu.jpg?raw=true)
+![現実的なシストリックアレイ](https://github.com/rmbmp717/ManabiSystollicArray/blob/main/image/SA_zu2.jpg?raw=true)
 
 ## 設計済み成果物
 
