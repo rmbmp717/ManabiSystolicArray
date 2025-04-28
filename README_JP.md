@@ -35,13 +35,30 @@
 
 ### Command-line Output
 ```bash
-$ riscv64-unknown-elf-gcc -O2 -o main main.cpp
-main.cpp: In function ‘int main()’:
-main.cpp:10:5: warning: unused variable ‘foo’ [-Wunused-variable]
-    10 |     int foo = 42;
-       |     ^~~
-$ echo "Simulation passed"
-Simulation passed
+  1450.00ns INFO     cocotb                             C_tmp = 
+                                                        [  0   0   0 114]
+  1450.00ns INFO     cocotb                             Updated HW result during step row_i=6 = 
+                                                        [[181  78  97  90]
+                                                         [ 84 103  72  33]
+                                                         [114  36  80  79]
+                                                         [212 110 136 114]]
+===============calc roop end =======================
+=============== Output data =======================
+  1650.00ns INFO     cocotb                             Updated HW result during step row_i=6 = 
+                                                        [[181  78  97  90]
+                                                         [ 84 103  72  33]
+                                                         [114  36  80  79]
+                                                         [212 110 136 114]]
+  1650.00ns INFO     cocotb                             Test Passed! HW result matches Python model.
+  1650.00ns INFO     cocotb.regression                  test_systolic_array passed
+  1650.00ns INFO     cocotb.regression                  ****************************************************************************************
+                                                        ** TEST                            STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        ****************************************************************************************
+                                                        ** test_bench.test_systolic_array   PASS        1650.00           0.08      20658.28  **
+                                                        ****************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0                 1650.00           0.15      11017.83  **
+                                                        ****************************************************************************************
+                                  
 ```
 
 ## 設計の詳細
