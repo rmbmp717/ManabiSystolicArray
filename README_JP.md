@@ -33,6 +33,15 @@
 2. 実行バイナリを`.hex`ファイルに変換  
 3. cocotbによるシミュレーションを正常実行
 
+   ```bash
+$ riscv64-unknown-elf-gcc -O2 -o main main.cpp
+main.cpp: In function ‘int main()’:
+main.cpp:10:5: warning: unused variable ‘foo’ [-Wunused-variable]
+    10 |     int foo = 42;
+       |     ^~~
+$ echo "Simulation passed"
+Simulation passed
+
 ## 設計の詳細
 
 1. **Pythonモデル**  
