@@ -1,80 +1,75 @@
-# ManabiSystollicArray (Verilog HDL & Google DSLX & C++ & Python)
+# ManabiSystollicArray（Verilog HDL・Google DSLX・C++・Python）
 
-## Introduction
+## はじめに
 
-NeuralNetworkの行列計算の重みのデータ転送量を削減する回路アーキテクチャが存在するそうです。
-それが、シストリックアレイです。本プロジェクトではシストリックアレイの自己教育実験目的での設計を行います。
-※なお、本プロジェクトは教育・実験目的で作成されています。実際の製品向け機能や高速化は今後の検討課題となります。
+ニューラルネットワークの行列演算における重みデータの転送量を削減する回路アーキテクチャとして、**シストリックアレイ**があります。本プロジェクトでは、自己学習と実験を目的にシストリックアレイを設計いたします。  
+> *本プロジェクトは教育および実験を目的としており、製品向けの機能や性能最適化は今後の課題です。*
 
 ## 目的
 
-シストリックアレイ( Systolic array )とは、行列乗算を効率的に行うための演算器アレイです。大手IT企業のAI半導体、NPUなどで使用されています。では、趣味レベルで自作してみよう。
+シストリックアレイとは、複数の演算要素（PE）を行列乗算に特化して配置し、効率的に演算を行う回路アレイです。大手IT企業のAIチップやNPUにも採用されています。本趣味レベルでの自作に挑戦いたします。
 
 ## ブロック図
 
-- シストリックアレイの概念図は下図です。<br>
+- **シストリックアレイの概念図**  
+  ![シストリックアレイ](https://github.com/rmbmp717/ManabiSystolicArray/blob/main/image/SA_zu.jpg?raw=true)
 
-![シストリックアレイ](https://github.com/rmbmp717/ManabiSystolicArray/blob/main/image/SA_zu.jpg?raw=true)
+- **制御回路を追加した実装イメージ**  
+  *(RISC-Vは学習用の演習として使用しています。)*  
+  ![実装イメージ](https://github.com/rmbmp717/ManabiSystolicArray/blob/main/image/SA_zu2.jpg?raw=true)
 
-- 現実的に制御回路などを付加すると下図になります。<br>
-RISC-Vでなく専用ロジックがベターなのは知ってます。RISC-Vの設計練習でもあります。<br>
+## 設計成果物
 
-![現実的なシストリックアレイ](https://github.com/rmbmp717/ManabiSystolicArray/blob/main/image/SA_zu2.jpg?raw=true)
+- **Pythonモデル**  
+- **シストリックアレイ設計データ**（Verilog）  
+- **RISC-Vコア設計データ**（Verilog）  
+- **RISC-V用ホストプログラム**（C++）  
+- **FPGA統合用データ**（Verilog）  
+- **16ビット浮動小数点乗算回路**（DSLX → Verilog）
 
-## 設計済み成果物
+## デモ実行結果
 
-上のシストリックアレイを設計しました。成果物は下記
+1. C++ホストプログラムをコンパイル  
+2. 実行バイナリを`.hex`ファイルに変換  
+3. cocotbによるシミュレーションを正常実行
 
-- Pythonモデル
-- シストリックアレイ設計データ（Verilog）
-- RISC-V設計データ（Verilog）
-- RISC-V用プログラム（C++）
-- FPGA用設計データ（Verilog）
-- 16bit浮動小数点乗算回路（DSLX→Verilog）
+## 設計の詳細
 
-## デモ動作結果
+1. **Pythonモデル**  
+   - ファイル：`Python_model/SystolicArray_model.py`  
+   - 各演算要素（PE）をクラス`PE`として定義し、右シフト・下シフト動作をメソッドでモデル化しています。
 
-- C++プログラムのコンパイル
-- 実行コードをhexファイルに変換
-- cocotbシミュレーション実施
+2. **シストリックアレイ設計（Verilog）**  
+   - ディレクトリ：`Verilog/SA4x4/`  
+   - Pythonモデルをそのまま再現したVerilog実装です。  
+   - 8×8版も用意していますが、動作確認は未実施です。
 
-## 各設計の詳細
+3. **RISC-Vコア設計（Verilog）**  
+   - ディレクトリ：`Verilog/RISCV/`  
+     1. `RV32IM_FPGA_PIPELINE.v` — 5段パイプライン設計  
+     2. `RV32IM_FPGA_PIPELINE_SUP.v` — 可能な限り深くパイプラインを詰めた設計
 
-- Pythonモデル <br>
-/Python_model/SystolicArray_model.pyclass PEが各プロセッサエレメント、右シフト・下シフトを関数でモデル化しています。
+4. **RISC-V用ホストプログラム（C++）**  
+   - ディレクトリ：`c_program/`  
+   - ビルドにはRISC-Vツールチェーンのインストールが必要です。  
+   - ファイル名は後日、より分かりやすいものに変更予定です。
 
-- シストリックアレイ設計データ（Verilog）<br>
-/Verilog/SA4x4/のフォルダに格納してあります。基本的には上のPythonモデルをそのまま実行することが仕様です。SA8x8の方は動作確認は未実施です。
+5. **FPGA統合用データ（Verilog）**  
+   - ディレクトリ：`fpga/`  
+   - 現時点では合成のみ確認済みで、4×4配列は正常に合成可能です。
 
-- RISC-V設計データ（Verilog）<br>
-/Verilog/RISCV/のフォルダに格納してあります。<br>
-1. RV32IM_FPGA_PIPELINE.v <br>
-2. RV32IM_FPGA_PIPELINE_SUP.v <br>
-1は5段パイプライン設計です。2は可能な限りパイプラインを詰めた設計です。
-
-- RISC-V用プログラム（C++）<br>
-/c_program/のフォルダに格納してあります。<br>
-RISC-V用プログラムのコンパイルにはRISC-Vのツールチェーンをインストールしてください。ファイル名は後でわかりやすいファイル名に変更する予定です。<br>
-
-- FPGA用設計データ（Verilog）<br>
-/fpga/ <br>
-フォルダのファイルで合成のみはテストしました。SA4x4は可能でした。<br>
-
-- 16bit浮動小数点乗算回路（DSLX→Verilog）<br>
-/Verilog/fp16_mul/ <br>
-Google DSLXコードで設計したものをVerilogに変換しています。
-fp16_mul.xがDSLXでの設計データ。 <br>
-fp16_multiplier_stage_n.v がPIPELINE=nのVerilogファイルです。
-設計は完了していますが、上のプロジェクトに組み込むことは未実施です。
+6. **16ビット浮動小数点乗算回路（DSLX → Verilog）**  
+   - ディレクトリ：`Verilog/fp16_mul/`  
+     - `fp16_mul.x`：DSLXソース  
+     - `fp16_multiplier_stage_n.v`：パイプライン段数`n`で生成されたVerilog  
+   - 設計は完了していますが、プロジェクト本体への組み込みは未実施です。
 
 ## 未解決の課題
 
-- 浮動小数点演算には対応していない。
-- 8x8のSAはFPGAでの合成が非現実的
+- 本体のシストリックアレイに浮動小数点演算機能が未対応  
+- FPGA上での8×8配列合成は現実的ではない
 
-## 所感
+## まとめ
 
-数か月前のNoteをまとめました。まとめないと忘れてしまいますしね。<br>
-（再掲）学習用です。仕事は別ですしね。
-
-
+数か月前のノートをまとめたものです。忘れないうちに記録いたしました。  
+*(繰り返しになりますが、本プロジェクトは学習用であり、業務とは無関係です。)*  
