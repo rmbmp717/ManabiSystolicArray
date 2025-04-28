@@ -31,5 +31,8 @@ NeuralNetworkの行列計算の重みのデータ転送量を削減する回路�
 
 ## 各設計の詳細
 
-- Pythonモデル
+- Pythonモデル <br>
 /Python_model/SystolicArray_model.pyclass PEが各プロセッサエレメント、右シフト・下シフトを関数でモデル化しています。
+- シストリックアレイ設計データ（Verilog）<br>
+/Verilog/SA4x4/のフォルダに格納してあります。基本的には上のPythonモデルをそのまま実行することが仕様です。SA8x8の方は動作確認は未実施です。
+
