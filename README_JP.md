@@ -42,6 +42,7 @@ main.cpp:10:5: warning: unused variable ‘foo’ [-Wunused-variable]
        |     ^~~
 $ echo "Simulation passed"
 Simulation passed
+```
 
 ## 設計の詳細
 
