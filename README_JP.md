@@ -1,4 +1,4 @@
-# EduFPGA-RP5GPU (Verilog HDL & DSLX & C++ & Python)
+# ManabiSystollicArray (Verilog HDL & DSLX & C++ & Python)
 
 ## Introduction
 
@@ -11,6 +11,9 @@ NeuralNetworkの行列計算の重みのデータ転送量を削減する回路�
 シストリックアレイ( Systolic array )とは、行列乗算を効率的に行うための演算器アレイです。大手IT企業のAI半導体、NPUなどで使用されています。では、趣味レベルで自作してみよう。
 
 ## ブロック図
+
+![シストリックアレイ](https://github.com/rmbmp717/ManabiSystollicArray/blob/main/image/RP5_GPU.jpg?raw=true)
+![現実的なシストリックアレイ](https://github.com/rmbmp717/ManabiSystollicArray/blob/main/image/RP5_GPU.jpg?raw=true)
 
 ## 設計済み成果物
 
