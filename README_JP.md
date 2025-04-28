@@ -12,7 +12,13 @@ NeuralNetworkの行列計算の重みのデータ転送量を削減する回路�
 
 ## ブロック図
 
+- シストリックアレイの概念図は下図です。<br>
+
 ![シストリックアレイ](https://github.com/rmbmp717/ManabiSystolicArray/blob/main/image/SA_zu.jpg?raw=true)
+
+- 現実的に制御回路などを付加すると下図になります。<br>
+RISC-Vでなく専用ロジックがベターなのは知ってます。RISC-Vの設計練習でもあります。<br>
+
 ![現実的なシストリックアレイ](https://github.com/rmbmp717/ManabiSystolicArray/blob/main/image/SA_zu2.jpg?raw=true)
 
 ## 設計済み成果物
