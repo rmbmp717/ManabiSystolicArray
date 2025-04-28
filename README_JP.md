@@ -56,8 +56,16 @@ RISC-Vでなく専用ロジックがベターなのは知ってます。RISC-V�
 /c_program/のフォルダに格納してあります。<br>
 RISC-V用プログラムのコンパイルにはRISC-Vのツールチェーンをインストールしてください。ファイル名は後でわかりやすいファイル名に変更する予定です。<br>
 
-- FPGA用設計データ（Verilog）
-- 16bit浮動小数点乗算回路（DSLX→Verilog）
+- FPGA用設計データ（Verilog）<br>
+/fpga/ <br>
+フォルダのファイルで合成のみはテストしました。SA4x4は可能でした。<br>
+
+- 16bit浮動小数点乗算回路（DSLX→Verilog）<br>
+/Verilog/fp16_mul/ <br>
+Google DSLXコードで設計したものをVerilogに変換しています。
+fp16_mul.xがDSLXでの設計データ。 <br>
+fp16_multiplier_stage_n.v がPIPELINE=nのVerilogファイルです。
+設計は完了していますが、上のプロジェクトに組み込むことは未実施です。
 
 ## 未解決の課題
 
