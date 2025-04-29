@@ -173,6 +173,7 @@ module RV32IM(
     wire [1:0] pc_sel_a, pc_sel_b, pc_sel_c, pc_sel_d;
     wire dual_enb_a, dual_enb_b, dual_enb_c, dual_enb_d;
 
+    // 4命令同時Decord
     Decorder dec1(
         .clock(clock), .reset_n(reset_n), .decode_enb(decode_enb), .opcode(opcode1),
         // output 
